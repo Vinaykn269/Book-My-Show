@@ -63,25 +63,24 @@ pipeline {
             }
         }
         stage('Docker Build & Push') {
-             steps {
-                 sh '''
-                 echo "===== DEBUG START ====="
-                 whoami
-                 pwd
-                 docker --version
-                 docker ps
-                 ls -la
-                 ls -la bookmyshow-app
-                 echo "===== DEBUG END ====="
+    steps {
+        sh '''
+        set -e
 
-                 echo "Building Docker image..."
-                 docker build -t vinaykn269/bms:latest bookmyshow-app
+        echo "===== LOGIN ====="
+        echo "dckr_pat_JWpBAfgSh_FGmWqRWX8OAfQDuts" | docker login -u vinaykn269 --password-stdin
 
-                 echo "Pushing Docker image..."
-                 docker push vinaykn269/bms:latest
-                 '''
-               }
-           }
+        echo "===== BUILD ====="
+        docker build -t vinaykn269/bms:latest bookmyshow-app
+
+        echo "===== PUSH ====="
+        docker push vinaykn269/bms:latest
+
+        echo "===== LOGOUT ====="
+        docker logout
+        '''
+    }
+}
         stage('Deploy to Container') {
             steps {
                 sh '''
