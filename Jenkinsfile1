@@ -79,7 +79,7 @@ pipeline {
                 set -e
 
                 echo "===== LOGIN ====="
-                echo "dckr_pat_JWpBAfgSh_FGmWqRWX8OAfQDuts" | docker login -u vinaykn269 --password-stdin
+                echo "dckr_pat_KENbehHYAXqsptOS97Csq1Kfu_k" | docker login -u vinaykn269 --password-stdin
 
                 echo "===== BUILD ====="
                 docker build -t vinaykn269/bms:latest bookmyshow-app
