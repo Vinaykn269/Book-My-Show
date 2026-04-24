@@ -1,4 +1,3 @@
-(without K8S Stage)
 pipeline {
     agent any
     tools {
@@ -64,40 +63,40 @@ pipeline {
             }
         }
         stage('Docker Build & Push') {
-            steps {
-                script {
-                    withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {
-                        sh ''' 
-                        echo "Building Docker image..."
-                        docker build --no-cache -t vinaykn269/bms:latest -f bookmyshow-app/Dockerfile bookmyshow-app
+             steps {
+                 sh '''
+                 echo "===== DEBUG START ====="
+                 whoami
+                 pwd
+                 docker --version
+                 docker ps
+                 ls -la
+                 ls -la bookmyshow-app
+                 echo "===== DEBUG END ====="
 
-                        echo "Pushing Docker image to registry..."
-                        docker push vinaykn269/bms:latest
-                        '''
-                    }
-                }
-            }
-        }
+                 echo "Building Docker image..."
+                 docker build -t vinaykn269/bms:latest bookmyshow-app
+
+                 echo "Pushing Docker image..."
+                 docker push vinaykn269/bms:latest
+                 '''
+               }
+           }
         stage('Deploy to Container') {
             steps {
-                sh ''' 
-                echo "Stopping and removing old container..."
+                sh '''
                 docker stop bms || true
                 docker rm bms || true
 
-                echo "Running new container on port 3000..."
-                docker run -d --restart=always --name bms -p 3000:3000 vinaykn269/bms:latest
+                docker pull vinaykn269/bms:latest
 
-                echo "Checking running containers..."
+                docker run -d --name bms -p 3000:3000 vinaykn269/bms:latest
+
                 docker ps -a
-
-                echo "Fetching logs..."
-                sleep 5  # Give time for the app to start
                 docker logs bms
                 '''
-            }
-        }
-    }
+               }
+           }
     post {
         always {
             emailext attachLog: true,
