@@ -1,34 +1,42 @@
 pipeline {
     agent any
+
     tools {
         jdk 'jdk21'
         nodejs 'node25'
     }
+
     environment {
         SCANNER_HOME = tool 'sonar-scanner'
     }
+
     stages {
+
         stage('Clean Workspace') {
             steps {
                 cleanWs()
             }
         }
+
         stage('Checkout from Git') {
             steps {
                 git branch: 'main', url: 'https://github.com/Vinaykn269/Book-My-Show.git'
-                sh 'ls -la'  // Verify files after checkout
+                sh 'ls -la'
             }
         }
+
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonar-server') {
-                    sh ''' 
-                    $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=BMS \
-                    -Dsonar.projectKey=BMS 
+                    sh '''
+                    $SCANNER_HOME/bin/sonar-scanner \
+                    -Dsonar.projectName=BMS \
+                    -Dsonar.projectKey=BMS
                     '''
                 }
             }
         }
+
         stage('Quality Gate') {
             steps {
                 script {
@@ -36,51 +44,55 @@ pipeline {
                 }
             }
         }
+
         stage('Install Dependencies') {
             steps {
                 sh '''
                 cd bookmyshow-app
-                ls -la  # Verify package.json exists
                 if [ -f package.json ]; then
-                    rm -rf node_modules package-lock.json  # Remove old dependencies
-                    npm install  # Install fresh dependencies
+                    rm -rf node_modules package-lock.json
+                    npm install
                 else
-                    echo "Error: package.json not found in bookmyshow-app!"
+                    echo "Error: package.json not found!"
                     exit 1
                 fi
                 '''
             }
         }
+
         stage('OWASP FS Scan') {
             steps {
                 dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Check'
                 dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
             }
         }
+
         stage('Trivy FS Scan') {
             steps {
                 sh 'trivy fs . > trivyfs.txt'
             }
         }
+
         stage('Docker Build & Push') {
-    steps {
-        sh '''
-        set -e
+            steps {
+                sh '''
+                set -e
 
-        echo "===== LOGIN ====="
-        echo "dckr_pat_JWpBAfgSh_FGmWqRWX8OAfQDuts" | docker login -u vinaykn269 --password-stdin
+                echo "===== LOGIN ====="
+                echo "dckr_pat_JWpBAfgSh_FGmWqRWX8OAfQDuts" | docker login -u vinaykn269 --password-stdin
 
-        echo "===== BUILD ====="
-        docker build -t vinaykn269/bms:latest bookmyshow-app
+                echo "===== BUILD ====="
+                docker build -t vinaykn269/bms:latest bookmyshow-app
 
-        echo "===== PUSH ====="
-        docker push vinaykn269/bms:latest
+                echo "===== PUSH ====="
+                docker push vinaykn269/bms:latest
 
-        echo "===== LOGOUT ====="
-        docker logout
-        '''
-    }
-}
+                echo "===== LOGOUT ====="
+                docker logout
+                '''
+            }
+        }
+
         stage('Deploy to Container') {
             steps {
                 sh '''
@@ -94,8 +106,11 @@ pipeline {
                 docker ps -a
                 docker logs bms
                 '''
-               }
-           }
+            }
+        }
+
+    }   // ✅ THIS WAS MISSING
+
     post {
         always {
             emailext attachLog: true,
