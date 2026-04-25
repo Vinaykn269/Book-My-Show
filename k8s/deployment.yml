@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: bms-deployment
 spec:
-  replicas: 2
+  replicas: 1   # 🔥 IMPORTANT CHANGE
   selector:
     matchLabels:
       app: bms
